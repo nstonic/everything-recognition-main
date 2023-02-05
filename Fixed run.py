@@ -1,17 +1,20 @@
+from typing import NamedTuple
+
 import cv2
 
 from config import CASCADES
 
 
-def is_user_wants_quit():
+class Cascade(NamedTuple):
+    color: tuple
+    classifier: cv2.CascadeClassifier
+
+
+def is_user_wants_quit() -> bool:
     return cv2.waitKey(1) & 0xFF == ord('q')
 
 
-def show_frame(frame):
-    cv2.imshow('Video', frame)
-
-
-def draw_sqare(frame, color: tuple, rectangle: tuple):
+def draw_square(frame, color: tuple, rectangle: tuple):
     x, y, w, h = rectangle
     cv2.rectangle(
         img=frame,
@@ -22,7 +25,7 @@ def draw_sqare(frame, color: tuple, rectangle: tuple):
     )
 
 
-def get_rectangle(frame, cascade) -> tuple:
+def get_rectangle(frame, cascade: cv2.CascadeClassifier) -> tuple:
     return cascade.detectMultiScale(
         frame,
         scaleFactor=1.1,
@@ -31,35 +34,38 @@ def get_rectangle(frame, cascade) -> tuple:
     )
 
 
-def render_video(video, cascades):
+def render_video(video: cv2.VideoCapture, cascades: list[Cascade]):
     while True:
         if is_user_wants_quit():
             break
 
         if not video.isOpened():
-            print("Couldn't find your webcam... Sorry :c")
+            raise IOError("Couldn't find your webcam... Sorry :c")
 
         _, webcam_frame = video.read()
         gray_frame = cv2.cvtColor(webcam_frame, cv2.COLOR_BGR2GRAY)
 
         captures = (
-            (color, get_rectangle(frame=gray_frame, cascade=cascade))
-            for color, cascade in cascades
+            (cascade.color, get_rectangle(frame=gray_frame, cascade=cascade.classifier))
+            for cascade in cascades
         )
 
-        for color, capture in captures:
-            for rectangle in capture:
-                draw_sqare(webcam_frame, color, rectangle)
+        for color, rectangles in captures:
+            for rectangle in rectangles:
+                draw_square(webcam_frame, color, rectangle)
 
-        show_frame(webcam_frame)
+        cv2.imshow('Video', webcam_frame)
 
 
 def main():
-    cascades = (
-        (cascade['color'], cv2.CascadeClassifier(cascade['path']))
-        for _, cascade in CASCADES.items()
+    cascades = [
+        Cascade(
+            color=cascade['color'],
+            classifier=cv2.CascadeClassifier(cascade['path'])
+        )
+        for cascade in CASCADES.values()
         if cascade['draw']
-    )
+    ]
     video = cv2.VideoCapture(0)
     try:
         render_video(video, cascades)
