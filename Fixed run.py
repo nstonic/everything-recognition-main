@@ -67,6 +67,7 @@ def main():
         if cascade['draw']
     ]
     video = cv2.VideoCapture(0)
+    print('Press "q" for close video')
     try:
         render_video(video, cascades)
     finally:
@@ -74,5 +75,5 @@ def main():
         cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
