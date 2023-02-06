@@ -57,8 +57,8 @@ def render_video(video: cv2.VideoCapture, cascades: list[Cascade]):
         cv2.imshow('Video', webcam_frame)
 
 
-def main():
-    cascades = [
+def get_cascades():
+    return [
         Cascade(
             color=cascade['color'],
             classifier=cv2.CascadeClassifier(cascade['path'])
@@ -66,6 +66,10 @@ def main():
         for cascade in CASCADES.values()
         if cascade['draw']
     ]
+
+
+def main():
+    cascades = get_cascades()
     video = cv2.VideoCapture(0)
     print('Press "q" for close video')
     try:
